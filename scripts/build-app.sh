@@ -28,7 +28,14 @@ sips -z 1024 1024 "$ICON_SRC" --out "$ICONSET/icon_512x512@2x.png" >/dev/null
 iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 rm -rf "$(dirname "$ICONSET")"
 
+if [[ -n "${VERSION:-}" ]]; then
+  version="${VERSION#v}"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${version}" "$APP/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${version}" "$APP/Contents/Info.plist"
+fi
+
 codesign --force --sign - "$APP" >/dev/null
+codesign --verify --strict "$APP"
 
 echo "Built $APP"
 echo "Open it with: open $APP"

@@ -25,25 +25,34 @@ Local history comes from Codex session logs and Cursor's edit database. It is a 
 ## Requirements
 
 - macOS 14 or later
-- [Swift 6](https://www.swift.org/install/) (Xcode 16 or later provides it)
 - Codex, Cursor, or both, already signed in on this Mac
 
-Codex sign-in is the session from `codex login`. Cursor sign-in is the session in the Cursor app.
+Codex sign-in is the session from `codex login`. Cursor sign-in is the session in the Cursor app. Building from source also needs [Swift 6](https://www.swift.org/install/), which Xcode 16 or later provides.
 
 ## Install
 
-Clone the repository, then build the menu bar app:
+Download the latest DMG from [Releases](https://github.com/italiczx/agent-ledger/releases). Open it and drag **Agent Ledger** to **Applications**.
+
+The published build is ad-hoc signed and not notarized. Notarization is the part that needs a paid Apple Developer account, and this project does not have one. macOS blocks the first launch of an app downloaded from the internet. Open **System Settings → Privacy & Security** and choose **Open Anyway**. Put the app in `/Applications` before turning on **Launch at login**.
+
+Release builds run on Apple silicon. The file name ends in the architecture, such as `arm64`. On an Intel Mac, build from source.
+
+### Build from source
 
 ```sh
 ./scripts/build-app.sh
 open dist/AgentLedger.app
 ```
 
-The script builds a release binary, wraps it in `dist/AgentLedger.app`, adds the icon from `Resources/AppIcon-1024.png`, and ad-hoc signs the bundle. The app runs as a menu bar item and does not show a Dock icon.
+The script builds a release binary, wraps it in `dist/AgentLedger.app`, adds the icon from `Resources/AppIcon-1024.png`, and ad-hoc signs the bundle. The app runs as a menu bar item and does not show a Dock icon. For an app you built locally, right-click it and choose **Open** if macOS asks for confirmation.
 
-macOS may refuse the first launch because the signature is ad-hoc. Right-click `dist/AgentLedger.app`, choose **Open**, and confirm. For daily use, move that app to `/Applications` before turning on **Launch at login**.
+To pack the same app into a disk image:
 
-`dist/` is a build product and is not part of the repository.
+```sh
+./scripts/build-dmg.sh
+```
+
+`VERSION=0.1.0 ./scripts/build-dmg.sh` writes that version into the app before signing. A git tag named `v0.1.0` runs the same script on GitHub and publishes the DMG as a Release. `dist/` is a build product and is not part of the repository.
 
 ## Usage
 

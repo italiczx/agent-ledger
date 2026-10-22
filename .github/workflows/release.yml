@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  dmg:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build disk image
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: ./scripts/build-dmg.sh
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          gh release create "$GITHUB_REF_NAME" \
+            --title "Agent Ledger ${version}" \
+            --notes "$(cat <<EOF
+          ## Install
+
+          1. Download the DMG below.
+          2. Open it and drag **Agent Ledger** to **Applications**.
+          3. Open Agent Ledger from Applications.
+
+          This build is ad-hoc signed and not notarized. macOS blocks the first launch of an app downloaded from the internet. Open **System Settings → Privacy & Security** and choose **Open Anyway**.
+
+          The \`.sha256\` file is the checksum of the DMG. This build is for the architecture named in the file (\`arm64\` is Apple silicon).
+          EOF
+          )" \
+            dist/AgentLedger-*.dmg \
+            dist/AgentLedger-*.sha256
