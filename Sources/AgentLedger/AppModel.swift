@@ -30,6 +30,10 @@ final class SettingsStore {
         didSet { UserDefaults.standard.set(refreshOnWake, forKey: Keys.refreshOnWake) }
     }
 
+    var didCompleteSetup: Bool {
+        didSet { UserDefaults.standard.set(didCompleteSetup, forKey: Keys.setupComplete) }
+    }
+
     init() {
         let defaults = UserDefaults.standard
         let minutes = defaults.object(forKey: Keys.refresh) as? Int ?? 5
@@ -39,6 +43,7 @@ final class SettingsStore {
         showCodex = defaults.object(forKey: Keys.showCodex) == nil ? true : defaults.bool(forKey: Keys.showCodex)
         showCursor = defaults.object(forKey: Keys.showCursor) == nil ? true : defaults.bool(forKey: Keys.showCursor)
         refreshOnWake = defaults.object(forKey: Keys.refreshOnWake) == nil ? true : defaults.bool(forKey: Keys.refreshOnWake)
+        didCompleteSetup = defaults.bool(forKey: Keys.setupComplete)
     }
 
     private enum Keys {
@@ -49,6 +54,7 @@ final class SettingsStore {
         static let showCursor = "agentledger.showCursor"
         static let refreshOnWake = "agentledger.refreshOnWake"
         static let statsRange = "agentledger.statsRange"
+        static let setupComplete = "agentledger.didCompleteSetup"
     }
 
     static func savedRange() -> StatsRange {
@@ -85,6 +91,8 @@ final class AppModel {
     var lastUpdated: Date?
     var isRefreshing = false
     var copied = false
+    /// Step shown by the first-run wizard. Shared so the window and the menu bar stay together.
+    var setupStep = 0
 
     private var didStart = false
     private var inFlight: Task<Void, Never>?

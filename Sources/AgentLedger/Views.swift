@@ -9,6 +9,26 @@ struct PopoverView: View {
     @State private var loginDetail = LaunchAtLogin.detail
 
     var body: some View {
+        Group {
+            if model.settings.didCompleteSetup {
+                configured
+            } else {
+                FittingPanel(width: 400) {
+                    SetupWizard(model: model)
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                }
+            }
+        }
+        .onAppear {
+            model.keepBreakdownVisible()
+            Task { await model.refreshIfStale(seconds: 60) }
+        }
+        .onChange(of: model.settings.showCodex) { _, _ in model.keepBreakdownVisible() }
+        .onChange(of: model.settings.showCursor) { _, _ in model.keepBreakdownVisible() }
+    }
+
+    private var configured: some View {
         FittingPanel(width: 400) {
             VStack(alignment: .leading, spacing: 16) {
                 header
@@ -24,12 +44,6 @@ struct PopoverView: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .onAppear {
-            model.keepBreakdownVisible()
-            Task { await model.refreshIfStale(seconds: 60) }
-        }
-        .onChange(of: model.settings.showCodex) { _, _ in model.keepBreakdownVisible() }
-        .onChange(of: model.settings.showCursor) { _, _ in model.keepBreakdownVisible() }
     }
 
     @ViewBuilder

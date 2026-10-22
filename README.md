@@ -56,6 +56,8 @@ To pack the same app into a disk image:
 
 ## Usage
 
+The first launch opens a short setup window. It asks which of Codex and Cursor to show, then whether the menu bar should display remaining quota, used quota, or no numbers. Closing it without finishing brings it back on the next launch. The same choices are in **Settings** afterward.
+
 Click the menu bar item. The label looks like `Cx 72%  Cu 93%`: Codex, then Cursor, as the percent still left. **Settings** can show percent used instead, or turn the numbers off so the item reads `Ledger`. A tool that is hidden is left out. `!` means that tool is signed out, or the last refresh failed and there is no saved quota to keep showing.
 
 The panel has three tabs.
