@@ -5,6 +5,7 @@ import SwiftUI
 struct PopoverView: View {
     @Bindable var model: AppModel
     @State private var tab: PanelTab = .summary
+    @State private var showingSettings = false
     @State private var loginError: String?
     @State private var loginDetail = LaunchAtLogin.detail
 
@@ -32,13 +33,6 @@ struct PopoverView: View {
         FittingPanel(width: 400) {
             VStack(alignment: .leading, spacing: 16) {
                 header
-                Picker("Section", selection: $tab) {
-                    ForEach(PanelTab.allCases) { item in
-                        Text(item.rawValue).tag(item)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
                 tabContent
             }
             .padding(16)
@@ -48,39 +42,95 @@ struct PopoverView: View {
 
     @ViewBuilder
     private var tabContent: some View {
-        switch tab {
-        case .summary:
-            summary
-        case .detail:
-            detail
-        case .settings:
+        if showingSettings {
             settings
+        } else {
+            switch tab {
+            case .summary:
+                summary
+            case .detail:
+                detail
+            }
         }
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Agent Ledger")
-                    .font(.headline)
-                Text(updatedLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button {
-                Task { await model.refresh() }
-            } label: {
-                if model.isRefreshing {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Image(systemName: "arrow.clockwise")
+        VStack(alignment: .leading, spacing: 6) {
+            ZStack {
+                HStack(spacing: 8) {
+                    Text("Agent Ledger")
+                        .font(.headline)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    refreshButton
+                    settingsButton
                 }
+                sectionPicker
             }
-            .buttonStyle(.borderless)
-            .help("Refresh now")
-            .disabled(model.isRefreshing)
+            Text(showingSettings ? "Settings" : updatedLabel)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+    }
+
+    private var sectionPicker: some View {
+        HStack(spacing: 0) {
+            sectionButton(.summary)
+            sectionButton(.detail)
+        }
+        .padding(2)
+        .background(.quaternary.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func sectionButton(_ item: PanelTab) -> some View {
+        let selected = !showingSettings && tab == item
+        return Button {
+            tab = item
+            showingSettings = false
+        } label: {
+            Text(item.rawValue)
+                .font(.subheadline.weight(.medium))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .foregroundStyle(selected ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                .background {
+                    if selected {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(.background)
+                            .shadow(color: .black.opacity(0.15), radius: 0.5, y: 0.5)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private var refreshButton: some View {
+        Button {
+            Task { await model.refresh() }
+        } label: {
+            if model.isRefreshing {
+                ProgressView().controlSize(.small)
+                    .frame(width: 16, height: 16)
+            } else {
+                Image(systemName: "arrow.clockwise")
+            }
+        }
+        .buttonStyle(.borderless)
+        .help("Refresh now")
+        .disabled(model.isRefreshing)
+    }
+
+    private var settingsButton: some View {
+        Button {
+            showingSettings.toggle()
+        } label: {
+            Image(systemName: showingSettings ? "gearshape.fill" : "gearshape")
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(showingSettings ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+        .help(showingSettings ? "Close settings" : "Settings")
+        .accessibilityAddTraits(showingSettings ? .isSelected : [])
     }
 
     private var updatedLabel: String {
@@ -279,7 +329,6 @@ struct PopoverView: View {
 private enum PanelTab: String, CaseIterable, Identifiable {
     case summary = "Summary"
     case detail = "Detail"
-    case settings = "Settings"
 
     var id: String { rawValue }
 }
@@ -814,28 +863,33 @@ private struct FittingPanel<Content: View>: View {
         return max(360, visible - 8)
     }
 
-    private var height: CGFloat {
-        let ideal = idealHeight > 80 ? idealHeight : 420
-        return min(ideal, maxHeight)
+    private var displayHeight: CGFloat? {
+        guard idealHeight > 80 else { return nil }
+        return min(idealHeight, maxHeight)
     }
 
     var body: some View {
         Group {
-            if idealHeight > maxHeight {
+            if let displayHeight, idealHeight > maxHeight {
                 ScrollView(.vertical) {
                     fittedContent
                 }
                 .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+                .frame(width: width, height: displayHeight, alignment: .top)
             } else {
                 fittedContent
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(width: width, alignment: .top)
             }
         }
-        .frame(width: width, height: height, alignment: .top)
         .onPreferenceChange(PanelHeightKey.self) { newValue in
             guard newValue > 80 else { return }
             idealHeight = newValue
-            PanelWindow.resize(width: width, height: min(newValue, maxHeight))
+            PanelWindow.schedule(width: width, height: min(newValue, maxHeight))
+        }
+        .onAppear {
+            guard let displayHeight else { return }
+            PanelWindow.schedule(width: width, height: displayHeight)
         }
     }
 
@@ -852,15 +906,36 @@ private struct FittingPanel<Content: View>: View {
 
 @MainActor
 private enum PanelWindow {
-    static func resize(width: CGFloat, height: CGFloat) {
-        for window in NSApp.windows where window.isVisible {
+    /// The menu-bar window is placed before its real height is known, which leaves a
+    /// gap under the menu bar. Later resizes correct it. Repeat the correction until
+    /// the window is on screen and its top edge sits on the menu bar.
+    static func schedule(width: CGFloat, height: CGFloat) {
+        Task { @MainActor in
+            for _ in 0..<8 {
+                if apply(width: width, height: height) { return }
+                try? await Task.sleep(for: .milliseconds(20))
+            }
+        }
+    }
+
+    private static func apply(width: CGFloat, height: CGFloat) -> Bool {
+        guard let window = menuBarWindow(width: width),
+              let screen = window.screen ?? NSScreen.main else { return false }
+        let top = screen.visibleFrame.maxY
+        var next = window.frame
+        next.size = NSSize(width: width, height: height)
+        next.origin.y = top - height
+        let placed = abs(window.frame.height - height) < 0.5 && abs(window.frame.maxY - top) < 0.5
+        if placed { return true }
+        window.setFrame(next, display: true, animate: false)
+        return false
+    }
+
+    private static func menuBarWindow(width: CGFloat) -> NSWindow? {
+        NSApp.windows.first { window in
+            guard window.isVisible, let screen = window.screen ?? NSScreen.main else { return false }
             let frame = window.frame
-            guard abs(frame.width - width) < 40 else { continue }
-            guard abs(frame.height - height) > 0.5 else { continue }
-            var next = frame
-            next.origin.y -= height - frame.height
-            next.size = NSSize(width: width, height: height)
-            window.setFrame(next, display: true, animate: false)
+            return abs(frame.width - width) < 40 && frame.maxY > screen.visibleFrame.midY
         }
     }
 }

@@ -60,9 +60,9 @@ The first launch opens a short setup window. It asks which of Codex and Cursor t
 
 Click the menu bar item. The label looks like `Cx 72%  Cu 93%`: Codex, then Cursor, as the percent still left. **Settings** can show percent used instead, or turn the numbers off so the item reads `Ledger`. A tool that is hidden is left out. `!` means that tool is signed out, or the last refresh failed and there is no saved quota to keep showing.
 
-The panel has three tabs.
+The header has **Summary** and **Detail** as a button group. The gear beside refresh opens settings.
 
-| Tab | Contents |
+| View | Contents |
 | --- | --- |
 | Summary | Plan, amount left, meter, and reset for each visible tool. **Copy summary** puts the same reading on the clipboard. |
 | Detail | Further quota splits and pace, then local history for 7, 30, or 90 days. The range is remembered. |
