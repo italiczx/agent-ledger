@@ -7,6 +7,9 @@ let package = Package(
     products: [
         .executable(name: "AgentLedger", targets: ["AgentLedger"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.0")
+    ],
     targets: [
         .target(
             name: "AgentLedgerCore",
@@ -14,7 +17,10 @@ let package = Package(
         ),
         .executableTarget(
             name: "AgentLedger",
-            dependencies: ["AgentLedgerCore"]
+            dependencies: [
+                "AgentLedgerCore",
+                .product(name: "Sparkle", package: "Sparkle")
+            ]
         ),
         .testTarget(
             name: "AgentLedgerCoreTests",

@@ -11,9 +11,13 @@ arch=$(uname -m)
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 
-cp -R "$APP" "$stage/Agent Ledger.app"
+ditto "$APP" "$stage/Agent Ledger.app"
 ln -s /Applications "$stage/Applications"
-codesign --verify --strict "$stage/Agent Ledger.app"
+codesign --verify --strict --deep "$stage/Agent Ledger.app"
+
+zip="dist/AgentLedger-${version}-macOS-${arch}.zip"
+rm -f "$zip"
+ditto -c -k --sequesterRsrc --keepParent "$stage/Agent Ledger.app" "$zip"
 
 dmg="dist/AgentLedger-${version}-macOS-${arch}.dmg"
 rm -f "$dmg" "${dmg}.sha256"

@@ -54,6 +54,12 @@ To pack the same app into a disk image:
 
 `VERSION=0.1.0 ./scripts/build-dmg.sh` writes that version into the app before signing. A git tag named `v0.1.0` runs the same script on GitHub and publishes the DMG as a Release. `dist/` is a build product and is not part of the repository.
 
+## Updates
+
+Installed copies check GitHub about once a day. **Settings** can install a newer release automatically, or leave the prompt up so you choose when to install. The check uses [Sparkle](https://sparkle-project.org). Each release’s zip is signed with a key that is not an Apple Developer ID, so this works without a paid developer account.
+
+The first copy you install still has to be downloaded by hand. Only builds that already contain the updater can update themselves. The private signing key stays in the GitHub Actions secret `SPARKLE_ED_PRIVATE_KEY` and is not in this repository. Without that secret, the release still publishes a DMG and skips the update feed.
+
 ## Usage
 
 The first launch opens a short setup window. It asks which of Codex and Cursor to show, then whether the menu bar should display remaining quota, used quota, or no numbers. Closing it without finishing brings it back on the next launch. The same choices are in **Settings** afterward.
@@ -109,7 +115,7 @@ Agent Ledger uses the Codex and Cursor sign-in already on this Mac and asks thos
 
 The only thing the app saves is a local trend of percents, in `~/Library/Application Support/AgentLedger/trend.json`. Samples are percents and timestamps. They do not include tokens, account ids, or email addresses.
 
-Agent Ledger has no account of its own, sends no telemetry, and includes no third-party SDK.
+Agent Ledger has no account of its own and sends no telemetry. The update check requests the public release feed on GitHub. There is no other third-party service.
 
 The first time it reads Cursor's login, macOS may ask for permission to use the `cursor-access-token` keychain item. Allow it once.
 

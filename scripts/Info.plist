@@ -19,11 +19,23 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.2.1</string>
+	<string>0.2.2</string>
 	<key>CFBundleVersion</key>
-	<string>0.2.1</string>
+	<string>0.2.2</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/italiczx/agent-ledger/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>H5obhzgJqzyO82OLJQO55Pi6bsrYk9Z3XyiQPYk5jj4=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUAllowsAutomaticUpdates</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSHighResolutionCapable</key>

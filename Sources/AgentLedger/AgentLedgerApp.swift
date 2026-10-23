@@ -5,6 +5,7 @@ struct AgentLedgerApp: App {
     @State private var model = AppModel.shared
 
     init() {
+        _ = UpdateController.shared
         Task { @MainActor in
             AppModel.shared.start()
         }

@@ -318,6 +318,18 @@ struct PopoverView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            Toggle("Install updates automatically", isOn: Binding(
+                get: { UpdateController.shared.automaticallyDownloadsUpdates },
+                set: { UpdateController.shared.automaticallyDownloadsUpdates = $0 }
+            ))
+            Text("Agent Ledger checks GitHub about once a day. Automatic install downloads the new build and relaunches.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button("Check for Updates…") {
+                UpdateController.shared.checkForUpdates()
+            }
+            .controlSize(.small)
             Button("Quit Agent Ledger") {
                 NSApp.terminate(nil)
             }

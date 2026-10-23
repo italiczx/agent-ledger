@@ -20,11 +20,21 @@ jobs:
           VERSION: ${{ github.ref_name }}
         run: ./scripts/build-dmg.sh
 
+      - name: Sign update feed
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: ./scripts/sign-update.sh
+
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="${GITHUB_REF_NAME#v}"
+          files=(dist/AgentLedger-*.dmg dist/AgentLedger-*.sha256)
+          if [[ -f dist/appcast.xml ]]; then
+            files+=(dist/AgentLedger-*.zip dist/appcast.xml)
+          fi
           gh release create "$GITHUB_REF_NAME" \
             --title "Agent Ledger ${version}" \
             --notes "$(cat <<EOF
@@ -36,8 +46,9 @@ jobs:
 
           This build is ad-hoc signed and not notarized. macOS blocks the first launch of an app downloaded from the internet. Open **System Settings → Privacy & Security** and choose **Open Anyway**.
 
+          After this copy is installed, Agent Ledger checks GitHub about once a day and can install a newer release itself.
+
           The \`.sha256\` file is the checksum of the DMG. This build is for the architecture named in the file (\`arm64\` is Apple silicon).
           EOF
           )" \
-            dist/AgentLedger-*.dmg \
-            dist/AgentLedger-*.sha256
+            "${files[@]}"
